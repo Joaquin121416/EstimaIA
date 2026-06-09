@@ -4,40 +4,37 @@ from ml.pipeline import predict_effort, R2, MMRE, calc_confidence
 
 router = APIRouter(prefix="/api/v1", tags=["Estimacion"])
 
-VELOCIDAD_PROMEDIO_HORAS_SEMANA = 40  # horas por dev por semana
-
-@router.post(
-    "/estimate",
-    response_model=EstimacionOutput,
+@router.post("/estimate", response_model=EstimacionOutput,
     summary="Estimar esfuerzo de un proyecto",
     description="""
-Retorna estimación en horas-hombre con:
+Retorna estimación en horas-hombre incluyendo:
 - Intervalo de confianza basado en MMRE del modelo
+- **Duración estimada** en días y semanas (inferida de Asana start_on/completed_at o del histórico)
 - Top 3 variables SHAP que explican la predicción
-- Proyectos históricos de referencia más similares
-- **Confidence Score (1-100)** considerando R² del modelo y restricciones de presupuesto y tiempo del cliente
-    """
-)
+- Proyectos históricos de referencia más similares con fechas reales
+- **Confidence Score (1-100)** considerando R² del modelo + restricciones de presupuesto y deadline del cliente
+    """)
 def estimate_effort(project: ProjectInput):
-    esfuerzo, intervalo, esfuerzo_min, esfuerzo_max, shap_top3, referencia = predict_effort(
+    esfuerzo, intervalo, esfuerzo_min, esfuerzo_max, shap_top3, referencia, duracion_dias = predict_effort(
         project.tipo_sistema,
         project.tecnologia_principal,
         project.num_modulos,
         project.complejidad,
-        project.tamano_equipo_previsto
+        project.tamano_equipo_previsto,
+        duracion_dias=project.duracion_dias,
+        num_tareas=project.num_tareas,
     )
 
-    # Duración estimada en semanas
-    horas_semana = VELOCIDAD_PROMEDIO_HORAS_SEMANA * project.tamano_equipo_previsto
-    duracion_estimada_semanas = round(esfuerzo / horas_semana, 1)
+    duracion_semanas = round(duracion_dias / 7, 1)
+    horas_semana     = 40 * project.tamano_equipo_previsto
+    duracion_por_esfuerzo = round(esfuerzo / horas_semana, 1)
 
-    # Confidence score
     confidence = calc_confidence(
         r2=R2,
         esfuerzo_horas=esfuerzo,
-        duracion_semanas_estimada=duracion_estimada_semanas,
+        duracion_semanas_estimada=duracion_por_esfuerzo,
         presupuesto_maximo=project.presupuesto_maximo_soles,
-        deadline_semanas=project.deadline_semanas
+        deadline_semanas=project.deadline_semanas,
     )
 
     return EstimacionOutput(
@@ -45,10 +42,12 @@ def estimate_effort(project: ProjectInput):
         esfuerzo_min=esfuerzo_min,
         esfuerzo_max=esfuerzo_max,
         intervalo_confianza_pct=intervalo,
+        duracion_estimada_dias=duracion_dias,
+        duracion_estimada_semanas=duracion_semanas,
         modelo_usado="XGBoost",
         mmre_modelo=MMRE,
         r2_modelo=R2,
         shap_top3=shap_top3,
         proyectos_referencia=referencia,
-        confidence_score=ConfidenceDetail(**confidence)
+        confidence_score=ConfidenceDetail(**confidence),
     )

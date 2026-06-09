@@ -1,10 +1,6 @@
-__pycache__/
-*.pyc
-*.pyo
-.env
-venv/
-.venv/
-*.egg-info/
-dist/
-build/
-.DS_Store
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+restartPolicyType = "ON_FAILURE"
