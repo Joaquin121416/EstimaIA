@@ -8,6 +8,8 @@ class ProjectInput(BaseModel):
     num_modulos: int = Field(..., ge=1, le=50)
     complejidad: int = Field(..., ge=1, le=5)
     tamano_equipo_previsto: int = Field(..., ge=1, le=20)
+    presupuesto_maximo_soles: Optional[float] = Field(None, description="Presupuesto máximo del cliente en S/.")
+    deadline_semanas: Optional[int] = Field(None, description="Plazo máximo del cliente en semanas")
 
     model_config = {
         "json_schema_extra": {
@@ -37,16 +39,6 @@ class ProyectoReferencia(BaseModel):
     desvio_pct: float
     similitud_pct: float
 
-class EstimacionOutput(BaseModel):
-    esfuerzo_horas: float
-    esfuerzo_min: float
-    esfuerzo_max: float
-    intervalo_confianza_pct: float
-    modelo_usado: str
-    mmre_modelo: float
-    r2_modelo: float
-    shap_top3: List[ShapVariable]
-    proyectos_referencia: List[ProyectoReferencia]
 
 class DeveloperScore(BaseModel):
     id: int
@@ -79,3 +71,22 @@ class TeamOutput(BaseModel):
     equipo: List[DeveloperScore]
     cobertura_skills_pct: float
     balance_carga_desv_pct: float
+
+class ConfidenceDetail(BaseModel):
+    score_total: float
+    base_modelo: float
+    penalizacion_presupuesto: float
+    penalizacion_tiempo: float
+    mensaje: str
+
+class EstimacionOutput(BaseModel):
+    esfuerzo_horas: float
+    esfuerzo_min: float
+    esfuerzo_max: float
+    intervalo_confianza_pct: float
+    modelo_usado: str
+    mmre_modelo: float
+    r2_modelo: float
+    shap_top3: List[ShapVariable]
+    proyectos_referencia: List[ProyectoReferencia]
+    confidence_score: ConfidenceDetail  # ← NUEVO

@@ -130,3 +130,50 @@ def predict_effort(tipo, tecnologia, num_modulos, complejidad, tamano_equipo):
         })
 
     return round(pred, 0), round(intervalo, 1), esfuerzo_min, esfuerzo_max, shap_top3, referencia
+
+
+def calc_confidence(
+    r2: float,
+    esfuerzo_horas: float,
+    duracion_semanas_estimada: float,
+    tarifa_hora: float = 21.875,  # S/. 3,500/mes ÷ 160h = tarifa
+    presupuesto_maximo: float = None,
+    deadline_semanas: int = None
+) -> dict:
+
+    # Base: R² del modelo (máx 85 puntos para no inflar)
+    base = round(min(r2 * 85, 85), 1)
+
+    pen_presupuesto = 0.0
+    pen_tiempo = 0.0
+
+    # Penalización presupuestal
+    if presupuesto_maximo:
+        costo_estimado = esfuerzo_horas * tarifa_hora
+        if costo_estimado > presupuesto_maximo:
+            exceso = (costo_estimado - presupuesto_maximo) / presupuesto_maximo
+            pen_presupuesto = round(min(exceso * 40, 40), 1)  # máx -40 pts
+
+    # Penalización temporal
+    if deadline_semanas:
+        if duracion_semanas_estimada > deadline_semanas:
+            exceso = (duracion_semanas_estimada - deadline_semanas) / deadline_semanas
+            pen_tiempo = round(min(exceso * 30, 30), 1)  
+
+    score = round(max(base - pen_presupuesto - pen_tiempo, 5), 1)
+
+    # Mensaje según score
+    if score >= 75:
+        msg = "Alta confiabilidad. El proyecto es viable dentro de las restricciones indicadas."
+    elif score >= 50:
+        msg = "Confiabilidad media. Revisar alcance o negociar presupuesto/plazo con el cliente."
+    else:
+        msg = "Confiabilidad baja. Las restricciones de presupuesto o tiempo son incompatibles con el alcance estimado."
+
+    return {
+        "score_total": score,
+        "base_modelo": base,
+        "penalizacion_presupuesto": pen_presupuesto,
+        "penalizacion_tiempo": pen_tiempo,
+        "mensaje": msg
+    }
