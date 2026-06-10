@@ -32,9 +32,13 @@ Universidad Peruana de Ciencias Aplicadas (UPC) — 2026
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=[
+        "https://estimaia-front-production.up.railway.app",
+        "http://localhost:4200",
+        "*"
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
