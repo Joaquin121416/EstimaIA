@@ -42,7 +42,7 @@ def calc_score(dev: dict, tech_requerida: str):
 def assign_team(data: TeamInput):
     # Número óptimo de devs
     horas_semana_dev = 40
-    n_devs = max(1, round(data.esfuerzo_estimado_horas / (horas_semana_dev * data.duracion_semanas)))
+    n_devs = max(1, round(data.esfuerzo_estimado_horas / (horas_semana * max(1, round(data.duracion_semanas)))))
 
     scored = []
     for dev in DEVELOPERS:
