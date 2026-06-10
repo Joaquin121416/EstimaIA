@@ -85,12 +85,6 @@ class TeamInput(BaseModel):
     esfuerzo_estimado_horas: float
     tecnologia_requerida: str
     duracion_semanas: float
-
-    @computed_field
-    @property
-    def duracion_semanas_int(self) -> int:
-        return max(1, round(self.duracion_semanas))
-
     model_config = {
         "json_schema_extra": {
             "example": {
