@@ -1,10 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import estimate, assign_team, auth, users
-from db.database import Base, engine
-
-# HU-13/HU-14: crear tablas de usuarios si no existen
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="EstimaIA API",
@@ -14,10 +10,14 @@ app = FastAPI(
 **EstimaIA** aplica Machine Learning (XGBoost) para predecir el esfuerzo en horas-hombre
 de proyectos de software y recomendar el equipo optimo de desarrollo.
 
-### Autenticacion (Sprint 2)
+### Autenticacion (Sprint 2) - Usuarios hardcodeados temporalmente
 - `POST /api/v1/auth/register` - Crear usuario
 - `POST /api/v1/auth/login` - Iniciar sesion (retorna JWT)
 - `GET /api/v1/auth/me` - Usuario autenticado
+
+Usuarios de prueba:
+- Admin: joaquin@consultora.pe / estimaIA2026
+- PM: william@consultora.pe / estimaIA2026
 
 ### Gestion de Roles (Sprint 2 - Solo Admin)
 - `GET /api/v1/users/` - Listar usuarios

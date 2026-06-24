@@ -1,18 +1,13 @@
 # auth/dependencies.py
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from db.database import get_db
-from db.models import Usuario, RolUsuario
 from auth.security import decode_access_token
+from auth.hardcoded_users import find_user_by_email
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> Usuario:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Credenciales invalidas o token expirado",
@@ -26,16 +21,16 @@ def get_current_user(
     if email is None:
         raise credentials_exception
 
-    user = db.query(Usuario).filter(Usuario.email == email).first()
-    if user is None or not user.activo:
+    user = find_user_by_email(email)
+    if user is None or not user["activo"]:
         raise credentials_exception
 
     return user
 
 
-def require_admin(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
     """HU-14: Restringe el endpoint solo a usuarios con rol ADMIN."""
-    if current_user.rol != RolUsuario.ADMIN:
+    if current_user["rol"] != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Esta accion requiere permisos de Administrador"
