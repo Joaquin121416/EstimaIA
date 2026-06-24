@@ -1,43 +1,49 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import estimate, assign_team
+from routers import estimate, assign_team, auth, users
+from db.database import Base, engine
+
+# HU-13/HU-14: crear tablas de usuarios si no existen
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="EstimaIA API",
     description="""
-## Sistema Inteligente de Estimación de Esfuerzo y Asignación de Equipo
+## Sistema Inteligente de Estimacion de Esfuerzo y Asignacion de Equipo
 
 **EstimaIA** aplica Machine Learning (XGBoost) para predecir el esfuerzo en horas-hombre
-de proyectos de software y recomendar el equipo óptimo de desarrollo.
+de proyectos de software y recomendar el equipo optimo de desarrollo.
+
+### Autenticacion (Sprint 2)
+- `POST /api/v1/auth/register` - Crear usuario
+- `POST /api/v1/auth/login` - Iniciar sesion (retorna JWT)
+- `GET /api/v1/auth/me` - Usuario autenticado
+
+### Gestion de Roles (Sprint 2 - Solo Admin)
+- `GET /api/v1/users/` - Listar usuarios
+- `PUT /api/v1/users/{id}/rol` - Cambiar rol
+- `PUT /api/v1/users/{id}/desactivar` - Desactivar usuario
 
 ### Dataset
-Proyectos históricos de 4 empresas peruanas:
-- **ELDO** — Fintech / Lending y Factoring
-- **QROMA** — Manufactura / Pinturas
-- **NEXO SALUD** — Clínica Privada
-- **LOGIPAQ** — Logística / Courier
-
-### Endpoints principales
-- `POST /api/v1/estimate` — Estimación de esfuerzo con SHAP
-- `POST /api/v1/assign-team` — Recomendación de equipo óptimo
+Proyectos historicos de 4 empresas peruanas: ELDO, QROMA, NEXO SALUD, LOGIPAQ
 
 ### Desarrollado por
-William Franco Chávez Guerrero & Joaquín Cunorana Jimenez  
-Universidad Peruana de Ciencias Aplicadas (UPC) — 2026
+William Franco Chavez Guerrero & Joaquin Cunorana Jimenez
+Universidad Peruana de Ciencias Aplicadas (UPC) - 2026
     """,
-    version="1.0.0",
-    contact={"name": "EstimaIA Team", "email": "estimaia@upc.edu.pe"},
-    license_info={"name": "MIT"},
+    version="1.1.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(estimate.router)
 app.include_router(assign_team.router)
 
@@ -45,10 +51,12 @@ app.include_router(assign_team.router)
 def root():
     return {
         "sistema": "EstimaIA",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "status": "online",
         "docs": "/docs",
         "endpoints": {
+            "auth_login": "POST /api/v1/auth/login",
+            "auth_register": "POST /api/v1/auth/register",
             "estimate": "POST /api/v1/estimate",
             "assign_team": "POST /api/v1/assign-team"
         }
@@ -62,5 +70,5 @@ def health():
         "modelo": "XGBoost",
         "r2": R2,
         "mmre_pct": MMRE,
-        "dataset_proyectos": 21
+        "dataset_proyectos": 26
     }

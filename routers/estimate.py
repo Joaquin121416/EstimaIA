@@ -1,20 +1,25 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from models.schemas import ProjectInput, EstimacionOutput, ConfidenceDetail
 from ml.pipeline import predict_effort, R2, MMRE, calc_confidence
+from auth.dependencies import get_current_user
+from db.models import Usuario
 
 router = APIRouter(prefix="/api/v1", tags=["Estimacion"])
 
 @router.post("/estimate", response_model=EstimacionOutput,
     summary="Estimar esfuerzo de un proyecto",
     description="""
-Retorna estimación en horas-hombre incluyendo:
+Requiere autenticacion (Bearer token). Retorna estimacion en horas-hombre incluyendo:
 - Intervalo de confianza basado en MMRE del modelo
-- **Duración estimada** en días y semanas (inferida de Asana start_on/completed_at o del histórico)
-- Top 3 variables SHAP que explican la predicción
-- Proyectos históricos de referencia más similares con fechas reales
-- **Confidence Score (1-100)** considerando R² del modelo + restricciones de presupuesto y deadline del cliente
+- Duracion estimada en dias y semanas
+- Top 3 variables SHAP que explican la prediccion
+- Proyectos historicos de referencia mas similares
+- Confidence Score (1-100)
     """)
-def estimate_effort(project: ProjectInput):
+def estimate_effort(
+    project: ProjectInput,
+    current_user: Usuario = Depends(get_current_user)
+):
     esfuerzo, intervalo, esfuerzo_min, esfuerzo_max, shap_top3, referencia, duracion_dias = predict_effort(
         project.tipo_sistema,
         project.tecnologia_principal,

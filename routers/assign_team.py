@@ -1,6 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 import numpy as np
 from models.schemas import TeamInput, TeamOutput, DeveloperScore
+from auth.dependencies import get_current_user
+from db.models import Usuario
 
 router = APIRouter(prefix="/api/v1", tags=["Asignacion de Equipo"])
 
@@ -32,8 +34,11 @@ def calc_score(dev: dict, tech_requerida: str):
 
 @router.post("/assign-team", response_model=TeamOutput,
     summary="Recomendar equipo optimo para un proyecto",
-    description="Dado el esfuerzo estimado, tecnologia y duracion, retorna los N desarrolladores optimos ordenados por score multicriterio (Skills 40% + Experiencia 35% + Disponibilidad 25%).")
-def assign_team(data: TeamInput):
+    description="Requiere autenticacion. Dado el esfuerzo estimado, tecnologia y duracion, retorna los N desarrolladores optimos ordenados por score multicriterio (Skills 40% + Experiencia 35% + Disponibilidad 25%).")
+def assign_team(
+    data: TeamInput,
+    current_user: Usuario = Depends(get_current_user)
+):
     horas_semana = 40
     duracion = max(1, round(float(data.duracion_semanas)))
     n_devs = max(1, round(float(data.esfuerzo_estimado_horas) / (horas_semana * duracion)))
