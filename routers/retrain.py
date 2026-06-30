@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.database import get_db
 from models.project import Project, EstadoProyecto
-from auth import require_admin
+from auth.dependencies import require_admin
 
 router = APIRouter(prefix="/api/v1/admin/retrain", tags=["reentrenamiento"])
 
