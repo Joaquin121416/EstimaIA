@@ -34,7 +34,7 @@ def calc_score(dev: dict, tech_requerida: str):
 
 @router.post("/assign-team", response_model=TeamOutput,
     summary="Recomendar equipo optimo para un proyecto",
-    description="Requiere autenticacion. Dado el esfuerzo estimado, tecnologia y duracion, retorna los N desarrolladores optimos ordenados por score multicriterio (Skills 40% + Experiencia 35% + Disponibilidad 25%).")
+    description="Requiere autenticacion. Dado el esfuerzo estimado, tecnologia y duracion, retorna los N desarrolladores optimos ordenados por score multicriterio.")
 def assign_team(
     data: TeamInput,
     current_user: Usuario = Depends(get_current_user)

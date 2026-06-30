@@ -5,8 +5,8 @@ from db.database import Base
 import enum
 
 class RolUsuario(str, enum.Enum):
-    PM = "pm"          # Project Manager - HU-13
-    ADMIN = "admin"    # Administrador - HU-14
+    PM = "pm"
+    ADMIN = "admin"
 
 class Usuario(Base):
     __tablename__ = "usuarios"
@@ -15,6 +15,6 @@ class Usuario(Base):
     nombre = Column(String(120), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    rol = Column(SAEnum(RolUsuario), nullable=False, default=RolUsuario.PM)  # HU-14
+    rol = Column(SAEnum(RolUsuario, name="rol_usuario"), nullable=False, default=RolUsuario.PM)
     activo = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
