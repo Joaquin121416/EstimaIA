@@ -15,6 +15,10 @@ class Usuario(Base):
     nombre = Column(String(120), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    rol = Column(SAEnum(RolUsuario, name="rol_usuario"), nullable=False, default=RolUsuario.PM)
+    rol = Column(
+        SAEnum(RolUsuario, name="rol_usuario", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=RolUsuario.PM
+    )
     activo = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
