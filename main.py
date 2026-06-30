@@ -24,6 +24,14 @@ de proyectos de software y recomendar el equipo optimo de desarrollo.
 - PUT /api/v1/users/{id}/rol
 - PUT /api/v1/users/{id}/desactivar
 
+### Reentrenamiento (Solo Admin)
+- POST /api/v1/admin/retrain
+
+### sinceracion de Proyectos (Solo Admin)
+- GET /api/v1/admin/sincerar/pendientes
+- PUT /api/v1/admin/sincerar/project_id
+
+
 ### Dataset
 Proyectos historicos de 4 empresas peruanas: ELDO, QROMA, NEXO SALUD, LOGIPAQ
 
@@ -46,6 +54,8 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(estimate.router)
 app.include_router(assign_team.router)
+app.include_router(sincerar.router)
+app.include_router(retrain.router)
 
 @app.get("/", tags=["Sistema"])
 def root():
