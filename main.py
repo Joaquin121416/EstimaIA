@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import estimate, assign_team, auth, users
+from routers import estimate, assign_team, auth, users, retrain, sincerar
 from db.database import Base, engine
 
 # Crear tablas en Supabase si no existen
