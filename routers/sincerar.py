@@ -2,10 +2,10 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app.models.project import Project, EstadoProyecto
-from app.schemas.sincerar import SincerarRequest, ProyectoPendiente
-from app.auth import require_admin   # tu dependencia RBAC existente
+from db.database import get_db
+from models.project import Project, EstadoProyecto
+from schemas.sincerar import SincerarRequest, ProyectoPendiente
+from auth import require_admin   # tu dependencia RBAC existente
 
 router = APIRouter(prefix="/api/v1/admin/sincerar", tags=["sinceracion"])
 

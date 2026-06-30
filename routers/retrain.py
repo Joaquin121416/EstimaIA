@@ -7,9 +7,9 @@ from sklearn.metrics import r2_score, mean_absolute_percentage_error
 from xgboost import XGBRegressor
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app.models.project import Project, EstadoProyecto
-from app.auth import require_admin
+from db.database import get_db
+from models.project import Project, EstadoProyecto
+from auth import require_admin
 
 router = APIRouter(prefix="/api/v1/admin/retrain", tags=["reentrenamiento"])
 

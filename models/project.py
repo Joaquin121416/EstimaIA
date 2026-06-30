@@ -2,7 +2,7 @@
 import enum
 from datetime import datetime, date
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Boolean, Enum
-from app.database import Base
+from db.database import Base
 
 class EstadoProyecto(str, enum.Enum):
     estimado   = "estimado"     # solo tiene predicción
