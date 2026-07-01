@@ -3,6 +3,10 @@ from models.schemas import ProjectInput, EstimacionOutput, ConfidenceDetail
 from ml.pipeline import predict_effort, R2, MMRE, calc_confidence
 from auth.dependencies import get_current_user
 from db.models import Usuario
+from sqlalchemy.orm import Session
+from db.database import get_db
+from db.models import Project, EstadoProyecto
+
 
 router = APIRouter(prefix="/api/v1", tags=["Estimacion"])
 
@@ -18,6 +22,7 @@ Requiere autenticacion (Bearer token). Retorna estimacion en horas-hombre incluy
     """)
 def estimate_effort(
     project: ProjectInput,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
     esfuerzo, intervalo, esfuerzo_min, esfuerzo_max, shap_top3, referencia, duracion_dias = predict_effort(
@@ -41,6 +46,21 @@ def estimate_effort(
         presupuesto_maximo=project.presupuesto_maximo_soles,
         deadline_semanas=project.deadline_semanas,
     )
+
+    
+    nuevo_proyecto = Project(
+        nombre=project.nombre,
+        empresa=project.empresa,
+        esfuerzo_estimado_horas=esfuerzo,
+        estado=EstadoProyecto.estimado,
+        sincerado=False,
+        created_by=current_user.id  # opcional si tienes relación
+    )
+
+    db.add(nuevo_proyecto)
+    db.commit()
+    db.refresh(nuevo_proyecto)
+
 
     return EstimacionOutput(
         esfuerzo_horas=esfuerzo,
