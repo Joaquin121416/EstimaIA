@@ -26,7 +26,7 @@ def reentrenar(db: Session = Depends(get_db), user=Depends(require_admin)):
     filas = db.query(Project).filter(
         Project.sincerado == True,
         Project.incluir_en_training == True,
-        Project.estado == EstadoProyecto.completado,
+        Project.estado.in_(["completado", "finalizado"]),
         Project.esfuerzo_real_horas.isnot(None),
     ).all()
 
