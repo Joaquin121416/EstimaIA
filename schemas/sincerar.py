@@ -12,17 +12,15 @@ class SincerarRequest(BaseModel):
 
 class ProyectoPendiente(BaseModel):
     id: int
-    nombre: Optional[str] = None
-    tecnologia_principal: Optional[str] = None
-    num_modulos: Optional[int] = None
-    esfuerzo_estimado_horas: Optional[float] = None
-    esfuerzo_real_horas: Optional[float] = None
-    estado: Optional[str] = None
-    sincerado: Optional[bool] = None
-    incluir_en_training: Optional[bool] = None
-    completed_at: Optional[str] = None
+    nombre: str | None = None
+    esfuerzo_estimado_horas: float | None = None
+    esfuerzo_real_horas: float | None = None
+    estado: str | None = None
+    sincerado: bool | None = None
+    incluir_en_training: bool | None = None
+    completed_at: str | None = None
 
-    mmre: Optional[float] = None
+    mmre: float | None = None
 
-class Config:
-    from_attributes = True
+    class Config:
+        from_attributes = True   # 🔥 ESTO ES LA CLAVE
