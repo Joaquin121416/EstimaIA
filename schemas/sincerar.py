@@ -9,18 +9,20 @@ class SincerarRequest(BaseModel):
     tasks_count: Optional[int] = None
     incluir_en_training: bool = True
 
+
 class ProyectoPendiente(BaseModel):
     id: int
-    nombre: str
-    empresa: Optional[str]
-    tecnologia_principal: str
-    num_modulos: int
-    esfuerzo_estimado_horas: Optional[float]
-    esfuerzo_real_horas: Optional[float]
-    estado: str
-    sincerado: bool
-    # error de la estimación, útil para detectar outliers en la pantalla
+    nombre: Optional[str] = None
+    tecnologia_principal: Optional[str] = None
+    num_modulos: Optional[int] = None
+    esfuerzo_estimado_horas: Optional[float] = None
+    esfuerzo_real_horas: Optional[float] = None
+    estado: Optional[str] = None
+    sincerado: Optional[bool] = None
+    incluir_en_training: Optional[bool] = None
+    completed_at: Optional[str] = None
+
     mmre: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+class Config:
+    from_attributes = True
