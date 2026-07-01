@@ -72,21 +72,22 @@ def reentrenar(db: Session = Depends(get_db), user=Depends(require_admin)):
         except Exception:
             r2_old = None
 
-    promovido = r2_old is None or r2_new >= r2_old
+    promovido = bool(r2_old is None or r2_new >= r2_old)
     if promovido:
         if os.path.exists(MODEL_PATH):
             shutil.copy(MODEL_PATH, MODEL_PATH.replace(".joblib", f".bak_{datetime.utcnow():%Y%m%d%H%M}.joblib"))
         os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
         joblib.dump(challenger, MODEL_PATH)
 
+   
     return {
-        "proyectos_usados": len(filas),
-        "r2_anterior": round(r2_old, 4) if r2_old is not None else None,
-        "r2_nuevo": round(r2_new, 4),
-        "mmre_nuevo": round(mmre_new, 4),
-        "modelo_promovido": promovido,
+        "proyectos_usados": int(len(filas)),
+        "r2_anterior": float(round(r2_old, 4)) if r2_old is not None else None,
+        "r2_nuevo": float(round(r2_new, 4)),
+        "mmre_nuevo": float(round(mmre_new, 4)),
+        "modelo_promovido": bool(promovido),
         "mensaje": "Modelo actualizado ✓" if promovido
-                   else "Reentrenamiento descartado: el R² no mejoró. Se mantiene el champion.",
+                else "Reentrenamiento descartado: el R² no mejoró. Se mantiene el champion.",
         "reentrenado_por": user.email,
         "fecha": datetime.utcnow().isoformat(),
     }
