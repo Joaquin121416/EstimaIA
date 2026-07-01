@@ -45,13 +45,19 @@ Universidad Peruana de Ciencias Aplicadas (UPC) - 2026
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://estimaia-front-production.up.railway.app",
-        "http://localhost:4200"
+        "https://estimaia-front-production.up.railway.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ✅ 👇 AQUÍ VA EL HANDLER (CRÍTICO)
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    return JSONResponse(content={})
+
 
 app.include_router(auth.router)
 app.include_router(users.router)
