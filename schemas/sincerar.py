@@ -2,6 +2,7 @@
 from datetime import date
 from typing import Optional
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 class SincerarRequest(BaseModel):
     esfuerzo_real_horas: float = Field(..., gt=0, description="Horas reales que tomó")
@@ -18,7 +19,7 @@ class ProyectoPendiente(BaseModel):
     estado: str | None = None
     sincerado: bool | None = None
     incluir_en_training: bool | None = None
-    completed_at: str | None = None
+    completed_at: datetime | None = None
 
     mmre: float | None = None
 
