@@ -12,8 +12,9 @@ router = APIRouter(prefix="/api/v1/admin/sincerar", tags=["sinceracion"])
 @router.get("/pendientes", response_model=list[ProyectoPendiente])
 def listar_pendientes(db: Session = Depends(get_db), _=Depends(require_admin)):
     """Proyectos completados aún no sincerados + ya sincerados (para revisión)."""
-    proyectos = db.query(Project).filter(
-        Project.estado.in_([EstadoProyecto.completado, EstadoProyecto.en_curso])
+    proyectos = db.query(Project).filter(    
+      Project.estado == EstadoProyecto.completado,
+      Project.sincerado == False
     ).all()
 
     salida = []
