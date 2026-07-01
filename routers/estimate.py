@@ -53,8 +53,8 @@ def estimate_effort(
         empresa=getattr(project, "empresa", "DIGITAL DYNAMICS"),
         esfuerzo_estimado_horas=esfuerzo,
         estado=EstadoProyecto.estimado,
-        sincerado=False,
-        created_by=current_user.id  # opcional si tienes relación
+        sincerado=False
+        ##created_by=current_user.id  # opcional si tienes relación
     )
 
     db.add(nuevo_proyecto)
