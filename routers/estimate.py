@@ -50,7 +50,7 @@ def estimate_effort(
     
     nuevo_proyecto = Project(
         nombre=project.nombre,
-        empresa=project.empresa,
+        empresa=getattr(project, "empresa", "DIGITAL DYNAMICS"),
         esfuerzo_estimado_horas=esfuerzo,
         estado=EstadoProyecto.estimado,
         sincerado=False,
