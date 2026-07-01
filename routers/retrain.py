@@ -14,7 +14,7 @@ from auth.dependencies import require_admin
 router = APIRouter(prefix="/api/v1/admin/retrain", tags=["reentrenamiento"])
 
 MODEL_PATH      = "app/ml/model.joblib"          # champion en producción
-MIN_PROYECTOS   = 30                              # tu restricción de tesis
+MIN_PROYECTOS   = 20                              # tu restricción de tesis
 
 FEATURES_NUM = ["num_modulos", "tasks_count"]
 FEATURES_CAT = ["tecnologia_principal"]
