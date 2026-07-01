@@ -76,6 +76,7 @@ def reentrenar(db: Session = Depends(get_db), user=Depends(require_admin)):
     if promovido:
         if os.path.exists(MODEL_PATH):
             shutil.copy(MODEL_PATH, MODEL_PATH.replace(".joblib", f".bak_{datetime.utcnow():%Y%m%d%H%M}.joblib"))
+        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
         joblib.dump(challenger, MODEL_PATH)
 
     return {
