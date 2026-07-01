@@ -5,7 +5,7 @@ from auth.dependencies import get_current_user
 from db.models import Usuario
 from sqlalchemy.orm import Session
 from db.database import get_db
-from db.models import Project, EstadoProyecto
+from models.project import Project, EstadoProyecto
 
 
 router = APIRouter(prefix="/api/v1", tags=["Estimacion"])
