@@ -1,11 +1,13 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from routers import estimate, assign_team, auth, users, retrain, sincerar
-from db.database import Base, engine
+from db.database import init_db, DB_STATUS
 
-# Crear tablas en Supabase si no existen
-Base.metadata.create_all(bind=engine)
+# Crea las tablas si la BD responde. Si no, la API levanta igual:
+# /health y /docs siguen vivos para diagnosticar, y el modulo ML sigue operativo.
+init_db()
 
 app = FastAPI(
     title="EstimaIA API",
@@ -77,10 +79,28 @@ def root():
 def health():
     from ml import pipeline
     return {
-        "status": "ok",
+        "status": "ok" if DB_STATUS["conectada"] else "degradado",
         "modelo": "XGBoost",
         "r2": pipeline.R2,
+        "r2_cv": pipeline.R2_CV,
         "mmre_pct": pipeline.MMRE,
         "dataset_proyectos": pipeline.N_PROYECTOS,
         "modelo_reentrenado": os.path.exists(pipeline.MODEL_PATH),
+        "base_datos": {
+            "conectada": DB_STATUS["conectada"],
+            "motor": DB_STATUS["motor"],
+            "error": DB_STATUS.get("error"),
+            "diagnostico": DB_STATUS.get("diagnostico"),
+        },
+    }
+
+
+@app.post("/health/db/reconectar", tags=["Sistema"])
+def reconectar_db():
+    """Reintenta la conexion a la BD sin redesplegar (util tras restaurar Supabase)."""
+    ok = init_db()
+    return {
+        "conectada": ok,
+        "error": DB_STATUS.get("error"),
+        "diagnostico": DB_STATUS.get("diagnostico"),
     }
