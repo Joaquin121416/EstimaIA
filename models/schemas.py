@@ -39,6 +39,7 @@ class ConfidenceDetail(BaseModel):
     mensaje: str
 
 class EstimacionOutput(BaseModel):
+    proyecto_id: Optional[int] = None
     esfuerzo_horas: float
     esfuerzo_min: float
     esfuerzo_max: float

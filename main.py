@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import estimate, assign_team, auth, users, retrain, sincerar
@@ -26,6 +27,7 @@ de proyectos de software y recomendar el equipo optimo de desarrollo.
 
 ### Reentrenamiento (Solo Admin)
 - POST /api/v1/admin/retrain
+- GET  /api/v1/admin/retrain/estado
 
 ### sinceracion de Proyectos (Solo Admin)
 - GET /api/v1/admin/sincerar/pendientes
@@ -45,18 +47,14 @@ Universidad Peruana de Ciencias Aplicadas (UPC) - 2026
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://estimaia-front-production.up.railway.app"
+        "https://estimaia-front-production.up.railway.app",
+        "http://localhost:4200",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# ✅ 👇 AQUÍ VA EL HANDLER (CRÍTICO)
-@app.options("/{full_path:path}")
-async def options_handler(full_path: str):
-    return JSONResponse(content={})
 
 
 app.include_router(auth.router)
@@ -77,11 +75,12 @@ def root():
 
 @app.get("/health", tags=["Sistema"])
 def health():
-    from ml.pipeline import R2, MMRE
+    from ml import pipeline
     return {
         "status": "ok",
         "modelo": "XGBoost",
-        "r2": R2,
-        "mmre_pct": MMRE,
-        "dataset_proyectos": 26
+        "r2": pipeline.R2,
+        "mmre_pct": pipeline.MMRE,
+        "dataset_proyectos": pipeline.N_PROYECTOS,
+        "modelo_reentrenado": os.path.exists(pipeline.MODEL_PATH),
     }

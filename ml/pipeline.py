@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBRegressor
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, KFold
 from sklearn.metrics import r2_score, mean_absolute_percentage_error
 import shap
+import joblib
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data.dataset import ASANA_PROJECTS
@@ -41,14 +42,7 @@ def build_dataframe():
         })
     df = pd.DataFrame(rows)
 
-    # Feature engineering: variables derivadas con sentido de negocio
-    df["tareas_por_modulo"]     = df["num_tareas_asana"] / df["num_modulos"]
-    df["dias_por_tarea"]        = df["duracion_real_dias"] / df["num_tareas_asana"]
-    df["equipo_x_complejidad"]  = df["tamano_equipo"] * df["complejidad"]
-    df["modulos_x_complejidad"] = df["num_modulos"] * df["complejidad"]
-    df["velocidad_tareas_dia"]  = df["num_tareas_asana"] / df["duracion_real_dias"]
-
-    return df
+    return add_derived_features(df)
 
 def get_trained_model():
     df = build_dataframe()
@@ -76,10 +70,112 @@ def get_trained_model():
     r2   = round(float(r2_score(y_test, y_pred)), 3)
     mmre = round(float(mean_absolute_percentage_error(y_test, y_pred)) * 100, 1)
 
-    explainer = shap.TreeExplainer(model)
-    return model, explainer, r2, mmre, df
+    # R2 por validacion cruzada 5-fold: metrica robusta usada para decidir
+    # la promocion de modelos en el reentrenamiento (evita el sesgo de un
+    # unico split con pocos datos de test).
+    r2_cv = round(float(cross_val_score(
+        XGBRegressor(**dict(n_estimators=300, learning_rate=0.05, max_depth=4,
+                            subsample=0.7, colsample_bytree=0.6, min_child_weight=1,
+                            reg_alpha=1, reg_lambda=3, random_state=42, verbosity=0)),
+        X, y, cv=KFold(5, shuffle=True, random_state=42), scoring="r2"
+    ).mean()), 3)
 
-MODEL, EXPLAINER, R2, MMRE, DF = get_trained_model()
+    explainer = shap.TreeExplainer(model)
+    return model, explainer, r2, mmre, r2_cv, df
+
+# ---------------------------------------------------------------------------
+# Persistencia del modelo campeon (HU-06)
+# ---------------------------------------------------------------------------
+MODEL_DIR  = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.path.join(MODEL_DIR, "model.joblib")
+
+# Columnas de entrada del modelo, en orden. Unica fuente de verdad.
+X_COLUMNS = [
+    "tipo_enc", "tech_enc", "num_modulos", "complejidad", "tamano_equipo",
+    "duracion_real_dias", "num_tareas_asana", "tareas_por_modulo",
+    "dias_por_tarea", "equipo_x_complejidad", "modulos_x_complejidad",
+    "velocidad_tareas_dia",
+]
+
+
+def add_derived_features(df):
+    """Feature engineering compartido por entrenamiento y reentrenamiento."""
+    df["tareas_por_modulo"]     = df["num_tareas_asana"] / df["num_modulos"]
+    df["dias_por_tarea"]        = df["duracion_real_dias"] / df["num_tareas_asana"]
+    df["equipo_x_complejidad"]  = df["tamano_equipo"] * df["complejidad"]
+    df["modulos_x_complejidad"] = df["num_modulos"] * df["complejidad"]
+    df["velocidad_tareas_dia"]  = df["num_tareas_asana"] / df["duracion_real_dias"]
+    return df
+
+
+def _load_champion():
+    """Carga el modelo campeon persistido. None si no existe o es invalido."""
+    if not os.path.exists(MODEL_PATH):
+        return None
+    try:
+        bundle = joblib.load(MODEL_PATH)
+        if bundle.get("columns") != X_COLUMNS:
+            return None  # esquema de features incompatible -> ignorar
+        return bundle
+    except Exception:
+        return None
+
+
+def save_champion(model, r2, mmre, r2_cv, n_proyectos, le_tipo_, le_tech_):
+    """Persiste el modelo promovido para que sobreviva a reinicios de Railway."""
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    joblib.dump({
+        "model": model, "columns": X_COLUMNS,
+        "r2": r2, "mmre": mmre, "r2_cv": r2_cv, "n_proyectos": n_proyectos,
+        "le_tipo": le_tipo_, "le_tech": le_tech_,
+    }, MODEL_PATH)
+
+
+def _init():
+    """Al arrancar: usa el campeon persistido si existe; si no, entrena del dataset semilla."""
+    global MODEL, EXPLAINER, R2, MMRE, R2_CV, DF, le_tipo, le_tech, N_PROYECTOS
+
+    model_s, explainer_s, r2_s, mmre_s, r2cv_s, df_s = get_trained_model()
+    DF = df_s
+    N_PROYECTOS = len(df_s)
+
+    bundle = _load_champion()
+    if bundle is not None:
+        MODEL       = bundle["model"]
+        le_tipo     = bundle["le_tipo"]
+        le_tech     = bundle["le_tech"]
+        R2          = bundle["r2"]
+        MMRE        = bundle["mmre"]
+        R2_CV       = bundle.get("r2_cv", bundle["r2"])
+        N_PROYECTOS = bundle.get("n_proyectos", len(df_s))
+        EXPLAINER   = shap.TreeExplainer(MODEL)
+    else:
+        MODEL, EXPLAINER, R2, MMRE, R2_CV = model_s, explainer_s, r2_s, mmre_s, r2cv_s
+
+
+def reload_champion():
+    """
+    Recarga en caliente el modelo campeon tras un reentrenamiento exitoso.
+    Sin esto, /estimate seguiria usando el modelo viejo hasta reiniciar el server.
+    """
+    global MODEL, EXPLAINER, R2, MMRE, R2_CV, le_tipo, le_tech, N_PROYECTOS
+    bundle = _load_champion()
+    if bundle is None:
+        return False
+    MODEL       = bundle["model"]
+    le_tipo     = bundle["le_tipo"]
+    le_tech     = bundle["le_tech"]
+    R2          = bundle["r2"]
+    MMRE        = bundle["mmre"]
+    R2_CV       = bundle.get("r2_cv", bundle["r2"])
+    N_PROYECTOS = bundle.get("n_proyectos", N_PROYECTOS)
+    EXPLAINER   = shap.TreeExplainer(MODEL)
+    return True
+
+
+MODEL = EXPLAINER = R2 = MMRE = R2_CV = DF = None
+N_PROYECTOS = 0
+_init()
 
 def estimate_duration_dias(tipo, num_modulos, complejidad, tamano_equipo):
     df = DF.copy()
