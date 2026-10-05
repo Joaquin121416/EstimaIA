@@ -1,5 +1,6 @@
+from datetime import date
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 class ProjectInput(BaseModel):
     nombre: str
@@ -12,6 +13,20 @@ class ProjectInput(BaseModel):
     num_tareas: Optional[int] = Field(None, description="Numero de tareas en Asana")
     presupuesto_maximo_soles: Optional[float] = Field(None, description="Presupuesto maximo del cliente en S/.")
     deadline_semanas: Optional[int] = Field(None, description="Plazo maximo del cliente en semanas")
+    # --- Variables de ajuste (opcionales; ver ml/ajustes.py) ---
+    experiencia_equipo: Optional[int] = Field(None, ge=1, le=5, description="1 muy baja ... 5 muy alta")
+    claridad_requisitos: Optional[int] = Field(None, ge=1, le=5, description="1 muy baja ... 5 muy alta")
+    metodologia: Optional[Literal["scrum", "kanban", "hibrido", "cascada"]] = None
+    num_integraciones: Optional[int] = Field(None, ge=0, le=20, description="Sistemas externos a integrar")
+    nivel_seguridad: Optional[Literal["bajo", "medio", "alto"]] = None
+    reutilizacion_pct: Optional[float] = Field(None, ge=0, le=80, description="% de codigo reutilizable")
+    documentacion: Optional[Literal["basica", "estandar", "exhaustiva"]] = None
+    pruebas_automatizadas: Optional[bool] = None
+    plataformas_destino: Optional[int] = Field(None, ge=1, le=5, description="Web, Android, iOS, escritorio...")
+    disponibilidad_equipo_pct: Optional[float] = Field(None, ge=25, le=100, description="Dedicacion del equipo al proyecto")
+    # --- Cronograma ---
+    fecha_inicio: Optional[date] = Field(None, description="Inicio del proyecto (por defecto hoy)")
+    nombres_modulos: Optional[List[str]] = Field(None, description="Nombres de los modulos para el Gantt")
 
 class ShapVariable(BaseModel):
     variable: str
@@ -38,6 +53,45 @@ class ConfidenceDetail(BaseModel):
     penalizacion_tiempo: float
     mensaje: str
 
+class AjusteVariable(BaseModel):
+    variable: str
+    valor: str
+    factor: float
+    impacto_pct: float
+    impacto_horas: float
+
+class GanttTarea(BaseModel):
+    id: str
+    nombre: str
+    fase: str
+    tipo: str  # tarea | hito
+    horas: float
+    personas: float
+    rol: str
+    dependencias: List[str]
+    inicio: str
+    fin: str
+    dia_inicio: int
+    duracion_dias: int
+    holgura_dias: int
+    critica: bool
+
+class GanttFase(BaseModel):
+    nombre: str
+    inicio: str
+    fin: str
+    horas: float
+
+class GanttOutput(BaseModel):
+    fecha_inicio: str
+    fecha_fin: str
+    dias_habiles: int
+    dias_calendario: int
+    carriles_desarrollo: int
+    fases: List[GanttFase]
+    tareas: List[GanttTarea]
+    ruta_critica: List[str]
+
 class EstimacionOutput(BaseModel):
     proyecto_id: Optional[int] = None
     esfuerzo_horas: float
@@ -52,6 +106,10 @@ class EstimacionOutput(BaseModel):
     shap_top3: List[ShapVariable]
     proyectos_referencia: List[ProyectoReferencia]
     confidence_score: ConfidenceDetail
+    esfuerzo_base_modelo: Optional[float] = None
+    factor_ajuste_total: float = 1.0
+    ajustes: List[AjusteVariable] = []
+    gantt: Optional[GanttOutput] = None
 
 class DeveloperScore(BaseModel):
     id: int

@@ -37,6 +37,22 @@ El R² holdout se sigue reportando en `/health` por continuidad con la documenta
 
 ---
 
+## Variables de ajuste y cronograma Gantt (`/estimate`)
+
+`/estimate` acepta variables opcionales que **no** forman parte del dataset historico
+y por eso se aplican como multiplicadores sobre la prediccion de XGBoost (estilo COCOMO II,
+ver `ml/ajustes.py`): experiencia del equipo, claridad de requisitos, metodologia,
+integraciones externas, nivel de seguridad, % de reutilizacion de codigo, documentacion,
+pruebas automatizadas, plataformas destino y disponibilidad del equipo. Si no se envian,
+la estimacion es identica a la del modelo. La respuesta incluye `esfuerzo_base_modelo`,
+`factor_ajuste_total` y el detalle `ajustes`.
+
+La respuesta tambien trae `gantt` (ver `ml/gantt.py`): fases, tareas por modulo, hitos,
+dependencias, roles, horas, fechas en dias habiles y ruta critica. Acepta `fecha_inicio`
+y `nombres_modulos` opcionales.
+
+---
+
 ## Endpoints
 
 | Método | Ruta | Rol | Descripción |
