@@ -56,7 +56,7 @@ def init_db() -> bool:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         Base.metadata.create_all(bind=engine)
-        DB_STATUS.update(conectada=True, error=None)
+        DB_STATUS.update(conectada=True, error=None, diagnostico=None)
         log.info("Base de datos conectada correctamente.")
         return True
     except Exception as e:
