@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
-from data.equipo import a_dict, tarifas_promedio, listar_colaboradores
+from data.equipo import a_dict, tarifas_promedio, listar_colaboradores, seed_colaboradores
 from db.database import get_db
 from db.models import Colaborador, Usuario
 from models.schemas import ColaboradorIn, ColaboradorOut
@@ -28,6 +28,8 @@ def _normalizar(data: ColaboradorIn) -> dict:
 
 @router.get("/", response_model=List[ColaboradorOut], summary="Listar colaboradores")
 def listar(db: Session = Depends(get_db), _u: Usuario = Depends(get_current_user)):
+    # Si el backend arranco con la BD apagada, la tabla quedo vacia: sembrarla ahora
+    seed_colaboradores(db)
     return listar_colaboradores(db)
 
 

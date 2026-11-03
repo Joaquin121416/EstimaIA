@@ -113,6 +113,9 @@ def health():
 def reconectar_db():
     """Reintenta la conexion a la BD sin redesplegar (util tras restaurar Supabase)."""
     ok = init_db()
+    if ok:
+        with SessionLocal() as _db:
+            seed_colaboradores(_db)
     return {
         "conectada": ok,
         "error": DB_STATUS.get("error"),
