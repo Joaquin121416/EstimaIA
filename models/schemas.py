@@ -1,6 +1,8 @@
 from datetime import date
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
+
+Rol = Literal["dev", "qa", "devops", "seguridad"]
 
 class ProjectInput(BaseModel):
     nombre: str
@@ -27,6 +29,10 @@ class ProjectInput(BaseModel):
     # --- Cronograma ---
     fecha_inicio: Optional[date] = Field(None, description="Inicio del proyecto (por defecto hoy)")
     nombres_modulos: Optional[List[str]] = Field(None, description="Nombres de los modulos para el Gantt")
+    # --- Costos ---
+    tarifas_hora: Optional[Dict[Rol, float]] = Field(
+        None, description="Costo por hora (S/.) por rol: dev, qa, devops, seguridad. "
+                          "Si falta un rol se usa el promedio del catalogo de colaboradores.")
 
 class ShapVariable(BaseModel):
     variable: str
@@ -92,6 +98,24 @@ class GanttOutput(BaseModel):
     tareas: List[GanttTarea]
     ruta_critica: List[str]
 
+class CostoRol(BaseModel):
+    rol: str                 # dev | qa | devops | seguridad
+    rol_label: str
+    tipo: str                # end_to_end | apoyo
+    horas: float
+    pct: float
+    tarifa_hora: float
+    costo: float
+    tarifa_personalizada: bool = False
+
+class CostoProyecto(BaseModel):
+    moneda: str = "PEN"
+    costo_total: float
+    costo_min: float
+    costo_max: float
+    tarifa_promedio_hora: float
+    por_rol: List[CostoRol]
+
 class EstimacionOutput(BaseModel):
     proyecto_id: Optional[int] = None
     esfuerzo_horas: float
@@ -110,10 +134,13 @@ class EstimacionOutput(BaseModel):
     factor_ajuste_total: float = 1.0
     ajustes: List[AjusteVariable] = []
     gantt: Optional[GanttOutput] = None
+    costo: Optional[CostoProyecto] = None
 
 class DeveloperScore(BaseModel):
     id: int
     nombre: str
+    rol: str = "dev"                  # dev | qa | devops | seguridad
+    tipo_participacion: str = "end_to_end"   # end_to_end | apoyo
     seniority: str
     score_total: float
     score_skills: float
@@ -121,14 +148,32 @@ class DeveloperScore(BaseModel):
     score_disponibilidad: float
     tecnologias: List[str]
     disponibilidad_pct: float
+    costo_hora: float = 0.0
+    horas_asignadas: float = 0.0
+    dedicacion_pct: float = 0.0       # % de su jornada dedicada a este proyecto
+    costo: float = 0.0
 
 class TeamInput(BaseModel):
     esfuerzo_estimado_horas: float
     tecnologia_requerida: str
     duracion_semanas: float
+    horas_por_rol: Optional[Dict[Rol, float]] = Field(
+        None, description="Horas-hombre por rol (sale de costo.por_rol de /estimate). "
+                          "Si no se envia, se reparte con proporciones por defecto.")
+
+class ResumenRol(BaseModel):
+    rol: str
+    rol_label: str
+    tipo: str
+    personas: int
+    horas: float
+    costo: float
 
 class TeamOutput(BaseModel):
     num_devs_recomendados: int
+    num_colaboradores: int = 0
     equipo: List[DeveloperScore]
+    por_rol: List[ResumenRol] = []
+    costo_total: float = 0.0
     cobertura_skills_pct: float
     balance_carga_desv_pct: float

@@ -23,6 +23,14 @@ pid = r.json().get("proyecto_id")
 pred_antes = r.json().get("esfuerzo_horas")
 print(f"    -> proyecto_id={pid}  esfuerzo={pred_antes}h")
 
+print("    -> costo:", r.json().get("costo", {}).get("costo_total"), "S/.")
+horas_rol = {x["rol"]: x["horas"] for x in r.json()["costo"]["por_rol"]}
+r = show("assign-team", c.post("/api/v1/assign-team", headers=H, json={
+    "esfuerzo_estimado_horas": pred_antes, "tecnologia_requerida": "react",
+    "duracion_semanas": r.json()["duracion_estimada_semanas"], "horas_por_rol": horas_rol}))
+for m in r.json()["equipo"]:
+    print(f"    {m['rol']:<10} {m['nombre']:<18} {m['horas_asignadas']:>6}h  {m['dedicacion_pct']:>5}%  S/.{m['costo']}")
+
 print("\n=== 2. Estado del modelo ===")
 show("retrain/estado", c.get("/api/v1/admin/retrain/estado", headers=H))
 

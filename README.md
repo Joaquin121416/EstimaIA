@@ -51,6 +51,24 @@ La respuesta tambien trae `gantt` (ver `ml/gantt.py`): fases, tareas por modulo,
 dependencias, roles, horas, fechas en dias habiles y ruta critica. Acepta `fecha_inicio`
 y `nombres_modulos` opcionales.
 
+## Roles del equipo y costo del proyecto
+
+Cada colaborador (`data/equipo.py`) tiene un **rol** y un **costo por hora** (S/.):
+
+- **Desarrollo (`dev`)** — ven el proyecto **end-to-end**: analisis, diseno, desarrollo,
+  integraciones, UAT, documentacion y gestion tecnica.
+- **QA, DevOps y Seguridad** — roles de **apoyo**; solo cuentan las horas de sus tareas
+  del Gantt y participan con dedicacion parcial.
+
+`/estimate` devuelve `costo` (ver `ml/costos.py`): horas-hombre por rol x costo por hora
+del rol, con rango minimo/maximo. Las tarifas se pueden enviar en `tarifas_hora`
+(`{"dev": 30, "qa": 20, ...}`); si faltan se usa el promedio del catalogo. El costo
+tambien alimenta la penalizacion por presupuesto del Confidence Score.
+
+`/assign-team` acepta `horas_por_rol` y arma el equipo por rol: devs hasta cubrir sus horas
+y especialistas de apoyo con dedicacion parcial. Cada miembro trae `horas_asignadas`,
+`dedicacion_pct`, `costo_hora` y `costo`; el equipo trae `costo_total` con tarifas reales.
+
 ---
 
 ## Endpoints
@@ -62,7 +80,7 @@ y `nombres_modulos` opcionales.
 | GET | `/api/v1/auth/me` | auth | Usuario actual |
 | GET | `/api/v1/users/` | admin | Listar usuarios |
 | POST | `/api/v1/estimate` | auth | Estimar esfuerzo (persiste el proyecto) |
-| POST | `/api/v1/assign-team` | auth | Recomendar equipo |
+| POST | `/api/v1/assign-team` | auth | Recomendar equipo por rol (dev / QA / DevOps / Seguridad) con costo |
 | GET | `/api/v1/admin/sincerar/pendientes` | admin | Proyectos por sincerar |
 | PUT | `/api/v1/admin/sincerar/{id}` | admin | Cargar esfuerzo real |
 | PATCH | `/api/v1/admin/sincerar/{id}/toggle-training` | admin | Incluir/excluir del training |

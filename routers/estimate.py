@@ -8,6 +8,7 @@ from db.database import get_db
 from db.models import Usuario
 from ml import pipeline
 from ml.ajustes import calcular_ajustes
+from ml.costos import calcular_costo
 from ml.gantt import generar_gantt
 from ml.pipeline import predict_effort, calc_confidence
 from models.project import EstadoProyecto, Project
@@ -27,6 +28,8 @@ Requiere autenticacion (Bearer token). Retorna la estimacion en horas-hombre inc
 - Confidence Score (1-100)
 - Ajuste por variables adicionales (experiencia, metodologia, integraciones, seguridad...)
 - Cronograma Gantt detallado con fases, tareas, hitos, dependencias y ruta critica
+- Costo del proyecto (S/.) por rol: horas-hombre x costo por hora. Los devs ven el
+  proyecto end-to-end; QA, DevOps y Seguridad cuentan solo sus tareas de apoyo
 
 El proyecto queda persistido en BD con estado `estimado`, listo para ser
 sincerado luego con su esfuerzo real y alimentar el reentrenamiento (HU-06).
@@ -82,6 +85,14 @@ def estimate_effort(
         fecha_inicio=project.fecha_inicio,
     )
 
+    costo = calcular_costo(
+        esfuerzo_horas=esfuerzo,
+        esfuerzo_min=esfuerzo_min,
+        esfuerzo_max=esfuerzo_max,
+        gantt=gantt,
+        tarifas=project.tarifas_hora,
+    )
+
     duracion_semanas = round(duracion_dias / 7, 1)
     horas_semana = 40 * project.tamano_equipo_previsto * disponibilidad
     duracion_por_esfuerzo = round(esfuerzo / horas_semana, 1)
@@ -90,6 +101,7 @@ def estimate_effort(
         r2=pipeline.R2,
         esfuerzo_horas=esfuerzo,
         duracion_semanas_estimada=duracion_por_esfuerzo,
+        tarifa_hora=costo["tarifa_promedio_hora"],
         presupuesto_maximo=project.presupuesto_maximo_soles,
         deadline_semanas=project.deadline_semanas,
     )
@@ -138,4 +150,5 @@ def estimate_effort(
         factor_ajuste_total=factor,
         ajustes=ajustes,
         gantt=gantt,
+        costo=costo,
     )
