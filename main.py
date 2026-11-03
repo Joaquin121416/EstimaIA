@@ -2,12 +2,20 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import estimate, assign_team, auth, users, retrain, sincerar
-from db.database import init_db, DB_STATUS
+from routers import estimate, assign_team, auth, users, retrain, sincerar, colaboradores
+from db.database import init_db, DB_STATUS, SessionLocal
+from data.equipo import seed_colaboradores
 
 # Crea las tablas si la BD responde. Si no, la API levanta igual:
 # /health y /docs siguen vivos para diagnosticar, y el modulo ML sigue operativo.
-init_db()
+if init_db():
+    # Primera vez: carga el catalogo de colaboradores semilla
+    try:
+        with SessionLocal() as _db:
+            seed_colaboradores(_db)
+    except Exception as _e:
+        import logging
+        logging.getLogger("estimaia").error("No se pudo sembrar colaboradores: %s", _e)
 
 app = FastAPI(
     title="EstimaIA API",
@@ -26,6 +34,11 @@ de proyectos de software y recomendar el equipo optimo de desarrollo.
 - GET /api/v1/users/
 - PUT /api/v1/users/{id}/rol
 - PUT /api/v1/users/{id}/desactivar
+
+### Catalogo de Colaboradores
+- GET/POST /api/v1/colaboradores/
+- GET/PUT /api/v1/colaboradores/{id}
+- PATCH /api/v1/colaboradores/{id}/activo
 
 ### Reentrenamiento (Solo Admin)
 - POST /api/v1/admin/retrain
@@ -63,6 +76,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(estimate.router)
 app.include_router(assign_team.router)
+app.include_router(colaboradores.router)
 app.include_router(sincerar.router)
 app.include_router(retrain.router)
 

@@ -9,6 +9,7 @@ from db.models import Usuario
 from ml import pipeline
 from ml.ajustes import calcular_ajustes
 from ml.costos import calcular_costo
+from data.equipo import listar_colaboradores
 from ml.gantt import generar_gantt
 from ml.pipeline import predict_effort, calc_confidence
 from models.project import EstadoProyecto, Project
@@ -91,6 +92,7 @@ def estimate_effort(
         esfuerzo_max=esfuerzo_max,
         gantt=gantt,
         tarifas=project.tarifas_hora,
+        colaboradores=listar_colaboradores(db, solo_activos=True),
     )
 
     duracion_semanas = round(duracion_dias / 7, 1)

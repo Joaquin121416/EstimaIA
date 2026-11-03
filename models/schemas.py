@@ -177,3 +177,19 @@ class TeamOutput(BaseModel):
     costo_total: float = 0.0
     cobertura_skills_pct: float
     balance_carga_desv_pct: float
+
+
+class ColaboradorIn(BaseModel):
+    nombre: str = Field(..., min_length=2, max_length=120)
+    email: Optional[str] = None
+    rol: Rol = "dev"
+    seniority: Literal["junior", "mid", "senior"] = "mid"
+    tecnologias: List[str] = []
+    disponibilidad_pct: float = Field(100, ge=0, le=100)
+    experiencia_anos: int = Field(0, ge=0, le=50)
+    costo_hora: float = Field(..., ge=0, description="Costo por hora en S/.")
+    proyectos: List[str] = []
+    activo: bool = True
+
+class ColaboradorOut(ColaboradorIn):
+    id: int

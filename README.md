@@ -53,7 +53,9 @@ y `nombres_modulos` opcionales.
 
 ## Roles del equipo y costo del proyecto
 
-Cada colaborador (`data/equipo.py`) tiene un **rol** y un **costo por hora** (S/.):
+Cada colaborador tiene un **rol** y un **costo por hora** (S/.). Se guardan en la tabla
+`colaboradores` (se crea y se siembra con `data/equipo.py` al arrancar) y se editan desde el
+Catalogo via `/api/v1/colaboradores`:
 
 - **Desarrollo (`dev`)** — ven el proyecto **end-to-end**: analisis, diseno, desarrollo,
   integraciones, UAT, documentacion y gestion tecnica.
@@ -80,6 +82,9 @@ y especialistas de apoyo con dedicacion parcial. Cada miembro trae `horas_asigna
 | GET | `/api/v1/auth/me` | auth | Usuario actual |
 | GET | `/api/v1/users/` | admin | Listar usuarios |
 | POST | `/api/v1/estimate` | auth | Estimar esfuerzo (persiste el proyecto) |
+| GET/POST | `/api/v1/colaboradores/` | auth | Listar / crear colaboradores |
+| GET/PUT | `/api/v1/colaboradores/{id}` | auth | Ver / editar colaborador |
+| PATCH | `/api/v1/colaboradores/{id}/activo` | auth | Activar / desactivar |
 | POST | `/api/v1/assign-team` | auth | Recomendar equipo por rol (dev / QA / DevOps / Seguridad) con costo |
 | GET | `/api/v1/admin/sincerar/pendientes` | admin | Proyectos por sincerar |
 | PUT | `/api/v1/admin/sincerar/{id}` | admin | Cargar esfuerzo real |

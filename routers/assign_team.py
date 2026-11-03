@@ -1,11 +1,13 @@
 import math
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from db.database import get_db
 import numpy as np
 from models.schemas import TeamInput, TeamOutput, DeveloperScore, ResumenRol
 from auth.dependencies import get_current_user
 from db.models import Usuario
-from data.equipo import COLABORADORES, ROLES, ROL_LABEL, ROL_TIPO
+from data.equipo import COLABORADORES, ROLES, ROL_LABEL, ROL_TIPO, listar_colaboradores
 from ml.costos import REPARTO_DEFECTO
 
 router = APIRouter(prefix="/api/v1", tags=["Asignacion de Equipo"])
@@ -71,8 +73,10 @@ costo por hora y costo; el equipo devuelve el costo total con tarifas reales.
 """)
 def assign_team(
     data: TeamInput,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
+    colaboradores = listar_colaboradores(db, solo_activos=True)
     semanas = max(1.0, float(data.duracion_semanas))
     esfuerzo = float(data.esfuerzo_estimado_horas)
     if data.horas_por_rol:
@@ -84,7 +88,7 @@ def assign_team(
     por_rol: list = []
     for rol in ROLES:
         candidatos = []
-        for c in COLABORADORES:
+        for c in colaboradores:
             if c.get("rol", "dev") != rol or c["disponibilidad_pct"] < 20:
                 continue
             total, s_skills, s_exp, s_disp = calc_score(c, data.tecnologia_requerida)

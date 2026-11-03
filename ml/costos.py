@@ -49,8 +49,9 @@ def calcular_costo(
     esfuerzo_max: float,
     gantt: Optional[Dict],
     tarifas: Optional[Dict[str, float]] = None,
+    colaboradores: Optional[List[Dict]] = None,
 ) -> Dict:
-    base = tarifas_promedio()
+    base = tarifas_promedio(colaboradores)
     tarifas_usadas = {r: float((tarifas or {}).get(r) or base[r]) for r in ROLES}
     horas = horas_por_rol(esfuerzo_horas, gantt)
 
